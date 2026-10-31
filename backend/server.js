@@ -1,0 +1,11 @@
+require('dotenv').config();
+const express=require('express'),path=require('path'),helmet=require('helmet'),cookieParser=require('cookie-parser');
+if(!process.env.JWT_SECRET||process.env.JWT_SECRET.length<32)throw new Error('Set JWT_SECRET to at least 32 random characters.');
+const app=express();app.disable('x-powered-by');app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'"],imgSrc:["'self'","data:"],connectSrc:["'self'"]}}}));
+app.use(express.json({limit:'20kb'}));app.use(cookieParser());
+app.use('/api/auth',require('./routes/auth'));app.use('/api/entries',require('./routes/entries'));
+app.get('/api/health',(req,res)=>res.json({status:'ok'}));
+app.use(express.static(path.join(__dirname,'..','frontend')));
+app.use('/api',(req,res)=>res.status(404).json({error:'API endpoint not found.'}));
+app.use((err,req,res,next)=>{console.error('Server error:',err.message);res.status(500).json({error:'Something went wrong. Please try again.'});});
+app.listen(process.env.PORT||3000,()=>console.log(`Water Usage Log running at http://localhost:${process.env.PORT||3000}`));
